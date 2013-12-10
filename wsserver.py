@@ -23,7 +23,7 @@ class LocalServerProtocol(WebSocketServerProtocol):
       print "returning", res
       data = json.dumps({"result": res})
       print "json", data
-      self.sendMessage(msg, res)
+      self.sendMessage(data, False)
 
    def doPing(self):
       if self.run:
@@ -55,38 +55,19 @@ class LocalServerFactory(WebSocketServerFactory):
       self.pingsSent = {}
       self.pongsReceived = {}
 
-class RootResource(Resource):
-    def __init__(self):
-        Resource.__init__(self)
-
-    def getChild(self, name, request):
-        return self
-
-    def render_GET(self, request):
-        return "Dark Wallet Ghost<br/><b>Dont steal my bitcoins!!</b>"
-
-
 def start_socket(cb):
    log.startLogging(sys.stdout)
 
    #contextFactory = ssl.DefaultOpenSSLContextFactory('keys/server.key',
    #                                                  'keys/server.crt')
 
-   #factory = LocalServerFactory("wss://localhost:9000",
    factory = LocalServerFactory("ws://localhost:9000", cb)
+   #factory = LocalServerFactory("wss://localhost:9000",
    #                            debug = 'debug' in sys.argv)
 
-   #listenWS(factory, contextFactory)
    listenWS(factory)
+   #listenWS(factory, contextFactory)
 
-   resource = WebSocketResource(factory)
-
-   root = RootResource() # File(".")
-   root.putChild("ws", resource)
-   site = Site(root)
-
-   #reactor.listenSSL(8080, site, contextFactory)
-   reactor.listenTCP(50002, site)
    return factory
 
 
