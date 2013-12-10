@@ -3,7 +3,7 @@ from twisted.internet import gtk2reactor # for gtk-2.0
 gtk2reactor.install()
 
 from twisted.internet import reactor
-
+import traceback
 import pygtk
 pygtk.require('2.0')
 
@@ -39,7 +39,10 @@ class DesktopGhost(ObeliskOfLightClient):
         self.fetch_last_height(self._on_last_height_fetched)
         self.ws = wsserver.start_socket(self._on_websocket_msg)
         if ENABLE_ZRE:
-            self.zre = ZreNode('')
+            self.zre = ZreNode('', self._on_zre_beacon)
+
+    def _on_zre_beacon(self, uuid):
+        self.send_notification("DarkWallet", "Found peer %s" %uuid)
 
     def _on_websocket_msg(self, msg, binary):
         print "websocket request arrived", msg
@@ -61,7 +64,7 @@ class DesktopGhost(ObeliskOfLightClient):
             n.set_icon_from_pixbuf(self.icon.get_pixbuf())
             n.show()
         except:
-            pass
+            traceback.print_exc()
 
     def format_time(self,seconds):
         minutes = floor(seconds / 60)
