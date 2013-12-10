@@ -38,11 +38,13 @@ class DesktopGhost(ObeliskOfLightClient):
         self._last_height = 0
         self.fetch_last_height(self._on_last_height_fetched)
         self.ws = wsserver.start_socket(self._on_websocket_msg)
+        self.peers = []
         if ENABLE_ZRE:
             self.zre = ZreNode('', self._on_zre_beacon)
 
     def _on_zre_beacon(self, uuid):
         self.send_notification("DarkWallet", "Found peer %s" %uuid)
+        self.peers.append(uuid)
 
     def _on_websocket_msg(self, msg, binary):
         print "websocket request arrived", msg
