@@ -10,19 +10,23 @@ from autobahn.websocket import WebSocketServerFactory, \
                                WebSocketServerProtocol, \
                                listenWS
 
-from autobahn.resource import WebSocketResource
-
 class LocalServerProtocol(WebSocketServerProtocol):
 
    def onConnect(self, *args):
       print "connected", args
 
    def onMessage(self, msg, binary):
+      # unpack
       print "msg", msg, binary
-      res = self.factory._cb(msg, binary)
-      print "returning", res
-      data = json.dumps({"result": res})
-      print "json", data
+      msg = json.loads(msg)
+      id = msg['id']
+      command = msg['command']
+
+      # call handler
+      res = self.factory._cb(command, binary)
+
+      # return result
+      data = json.dumps({'id': id, 'result': res})
       self.sendMessage(data, False)
 
    def doPing(self):
