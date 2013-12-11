@@ -28,7 +28,7 @@ ENABLE_ZRE = True
 class DesktopGhost(ObeliskOfLightClient):
     def __init__(self, *addresses):
         ObeliskOfLightClient.__init__(self, *addresses)
-        self.icon=gtk.status_icon_new_from_file(self.icon_directory()+"walletlogo.png")
+        self.icon=gtk.status_icon_new_from_file(self.icon_path("walletlogo.png"))
         self.icon.set_tooltip("Idle")
         self.state = "idle"
         self.tick_interval=10 #number of seconds between each poll
@@ -87,7 +87,7 @@ class DesktopGhost(ObeliskOfLightClient):
 
     def set_state(self,state):
         old_state=self.state
-        self.icon.set_from_file(self.icon_directory()+state+".png")
+        self.icon.set_from_file(self.icon_path(state+".png"))
         if state == "idle":
             delta = time() - self.start_working_time
             if old_state == "ok":
@@ -102,6 +102,9 @@ class DesktopGhost(ObeliskOfLightClient):
             delta = time() - self.start_working_time
             self.icon.set_tooltip("Working for %s..." % self.format_time(delta))
         self.state=state
+
+    def icon_path(self, icon):
+        return os.path.join(self.icon_directory(), 'images', icon)
 
     def icon_directory(self):
         return os.path.dirname(os.path.realpath(__file__)) + os.path.sep
