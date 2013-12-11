@@ -22,12 +22,18 @@ class LocalServerProtocol(WebSocketServerProtocol):
       id = msg['id']
       command = msg['command']
 
-      # call handler
-      res = self.factory._cb(command, binary)
+      def sendResult(res):
+          # return result
+          print "returning result"
+          if len(res) == 1:
+              res = res[0]
+          data = json.dumps({'id': id, 'result': res})
+          self.sendMessage(data, False)
 
-      # return result
-      data = json.dumps({'id': id, 'result': res})
-      self.sendMessage(data, False)
+      # call handler
+      defer = self.factory._cb(command, msg)
+
+      defer.addCallback(sendResult)
 
    def doPing(self):
       if self.run:

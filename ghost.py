@@ -19,6 +19,7 @@ import wsserver
 import obelisk
 from obelisk import ObeliskOfLightClient
 from zmqproto.zrenode import ZreNode
+from twisted.internet.defer import Deferred
 
 #Parameters
 MIN_WORK_TIME = 60 * 10 # min work time in seconds
@@ -36,7 +37,7 @@ class DesktopGhost(ObeliskOfLightClient):
         self.start_working_time = 0
         pynotify.init("DarkWallet Ghost")
         self._last_height = 0
-        self.fetch_last_height(self._on_last_height_fetched)
+        #self.fetch_last_height(self._on_last_height_fetched)
         self.ws = wsserver.start_socket(self._on_websocket_msg)
         self.peers = []
         if ENABLE_ZRE:
@@ -46,12 +47,21 @@ class DesktopGhost(ObeliskOfLightClient):
         self.send_notification("DarkWallet", "Found peer %s" %uuid)
         self.peers.append(uuid)
 
-    def _on_websocket_msg(self, msg, binary):
-        print "websocket request arrived", msg
+    def _on_websocket_msg(self, command, data):
+        defer = Deferred()
+        def trigger_defer(*args):
+            print "trigger defer", args
+            if args[0]:
+                defer.errback(args[0])
+            else:
+                defer.callback(args[1:])
         self.send_notification("DarkWallet", "Connected!")
-        if msg == "getheight":
-            return self._last_height
-        return "unknown"
+        if command == "fetch_height":
+            self.fetch_last_height(trigger_defer)
+        elif command == "fetch_history":
+            address = data['data']['address']
+            self.fetch_history(address, trigger_defer)
+        return defer
 
     def _on_last_height_fetched(self, ec, height, tx_hashes=[]):
         if self._last_height != height:
