@@ -19,14 +19,12 @@ class LocalServerProtocol(WebSocketServerProtocol):
 
    def onMessage(self, msg, binary):
       # unpack
-      print "msg", msg, binary
       msg = json.loads(msg)
       id = msg['id']
       command = msg['command']
 
       def sendResult(res):
           # return result
-          print "returning result"
           if len(res) == 1:
               res = res[0]
           data = json.dumps({'id': id, 'result': res})
@@ -34,26 +32,11 @@ class LocalServerProtocol(WebSocketServerProtocol):
 
       # call handler
       defer = self.factory._cb(command, msg)
-
       defer.addCallback(sendResult)
 
-   def doPing(self):
-      if self.run:
-         self.sendPing()
-         self.factory.pingsSent[self.peerstr] += 1
-         print self.peerstr, "PING Sent", self.factory.pingsSent[self.peerstr]
-         reactor.callLater(1, self.doPing)
-
-   def onPong(self, payload):
-      self.factory.pongsReceived[self.peerstr] += 1
-      print self.peerstr, "PONG Received", self.factory.pongsReceived[self.peerstr]
-
    def onOpen(self):
-      self.factory.pingsSent[self.peerstr] = 0
-      self.factory.pongsReceived[self.peerstr] = 0
       self.run = True
       self.factory.clients.append(self)
-      #self.doPing()
 
    def onClose(self, wasClean, code, reason):
       self.run = False
@@ -65,8 +48,6 @@ class LocalServerFactory(WebSocketServerFactory):
    def __init__(self, uri, cb):
       WebSocketServerFactory.__init__(self, uri, debug=False)
       self._cb = cb
-      self.pingsSent = {}
-      self.pongsReceived = {}
       self.clients = []
 
    def broadcast(self, cmd, data):
