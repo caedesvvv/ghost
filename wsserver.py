@@ -1,5 +1,7 @@
 import sys, json
 
+import traceback
+
 from twisted.internet import reactor, ssl
 from twisted.python import log
 from twisted.web.server import Site
@@ -50,11 +52,12 @@ class LocalServerProtocol(WebSocketServerProtocol):
       self.factory.pingsSent[self.peerstr] = 0
       self.factory.pongsReceived[self.peerstr] = 0
       self.run = True
+      self.factory.clients.append(self)
       #self.doPing()
 
    def onClose(self, wasClean, code, reason):
       self.run = False
-
+      self.factory.clients.remove(self)
 
 class LocalServerFactory(WebSocketServerFactory):
 
@@ -64,6 +67,15 @@ class LocalServerFactory(WebSocketServerFactory):
       self._cb = cb
       self.pingsSent = {}
       self.pongsReceived = {}
+      self.clients = []
+
+   def broadcast(self, cmd, data):
+      for client in self.clients:
+          try:
+              msg = {'command': cmd, 'data': data}
+              client.sendMessage(json.dumps(msg), False)
+          except:
+              traceback.print_exc()
 
 def start_socket(cb):
    log.startLogging(sys.stdout)
