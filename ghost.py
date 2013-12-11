@@ -138,5 +138,5 @@ class DesktopGhost(ObeliskOfLightClient):
 # If the program is run directly or passed as an argument to the python
 # interpreter then create a Widget instance and show it
 if __name__ == "__main__":
-    app = DesktopGhost('tcp://85.25.198.97:9091', 'tcp://85.25.198.97:9093', 'tcp://85.25.198.97:9094')
+    app = DesktopGhost('tcp://85.25.198.97:8081', 'tcp://85.25.198.97:8083', 'tcp://85.25.198.97:8084')
     app.main()
