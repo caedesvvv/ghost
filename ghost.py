@@ -139,6 +139,7 @@ class DesktopGhost(ObeliskOfLightClient):
         print obelisk.serialize.deser_block_header(header)
 
         self._on_last_height_fetched(None, height, tx_hashes)
+        self.ws.broadcast('block', height)
 
     def on_raw_transaction(self, hash, transaction):
         tx = obelisk.serialize.deser_tx(transaction)
