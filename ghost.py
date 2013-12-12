@@ -55,13 +55,35 @@ class DesktopGhost(ObeliskOfLightClient):
                 defer.errback(args[0])
             else:
                 defer.callback(args[1:])
-        self.send_notification("DarkWallet", "Connected!")
-        if command == "fetch_height":
+        if command == "fetch_last_height":
+            self.send_notification("DarkWallet", "Connected!")
             self.fetch_last_height(trigger_defer)
         elif command == "fetch_history":
             address = data['data']['address']
+            def format_history(*args):
+                args = list(args)
+                for idx, arg in enumerate(args):
+                    if arg.__class__ == str:
+                        args[idx] = arg.encode('hex')
+                    if arg.__class__ in [tuple, list]:
+                        args[idx] = format_history(*arg)
+                return args
+            defer.addCallback(parse_history)
             self.fetch_history(address, trigger_defer)
+        elif command == "subscribe_address":
+            address = data['data']['address']
+            self.subscribe_address(address, self.address_update, trigger_defer)
         return defer
+
+    def address_update(self, address_version, address_hash, height, block_hash, tx):
+        msg = {
+            'address_version': address_version,
+            'address_hash': address_hash.encode('hex'),
+            'height': height,
+            'block_hash': block_hash.encode('hex'),
+            'tx': tx.encode('hex')
+        }
+        self.ws.broadcast('address', msg)
 
     def _on_last_height_fetched(self, ec, height, tx_hashes=[]):
         if self._last_height != height:
@@ -139,14 +161,20 @@ class DesktopGhost(ObeliskOfLightClient):
         print obelisk.serialize.deser_block_header(header)
 
         self._on_last_height_fetched(None, height, tx_hashes)
-        self.ws.broadcast('block', height)
+        msg = {'height': height,
+               'hash': hash.encode('hex'),
+               'header': header.encode('hex'),
+               'tx_num': tx_num.encode('hex'),
+               'tx_hashes': map(lambda s: s.encode('hex'), tx_hashes)
+        }
+        self.ws.broadcast('block', msg)
 
     def on_raw_transaction(self, hash, transaction):
         tx = obelisk.serialize.deser_tx(transaction)
         outputs = []
         for output in tx.outputs:
             outputs.append(obelisk.util.format_satoshis(output.value))
-        print "* tx", hash.encode('hex'), ", ".join(outputs), "(%.2fkB)"%(len(transaction)/1024,)
+        #print "* tx", hash.encode('hex'), ", ".join(outputs), "(%.2fkB)"%(len(transaction)/1024,)
         self.icon_click('')
  
 # If the program is run directly or passed as an argument to the python
