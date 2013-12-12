@@ -70,7 +70,7 @@ class DesktopGhost(ObeliskOfLightClient):
                     if arg.__class__ in [tuple, list]:
                         args[idx] = format_history(*arg)
                 return args
-            defer.addCallback(parse_history)
+            defer.addCallback(format_history)
             self.fetch_history(address, trigger_defer)
         elif command == "subscribe_address":
             address = data['data']['address']
