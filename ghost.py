@@ -44,10 +44,12 @@ class DesktopGhost(ObeliskOfLightClient):
             self.zre = ZreNode('', self._on_zre_beacon)
 
     def _on_zre_beacon(self, uuid):
+        """ZRE beacon arrived"""
         self.send_notification("DarkWallet", "Found peer %s" %uuid)
         self.peers.append(uuid)
 
     def _on_websocket_msg(self, command, data):
+        """websocket message arrived"""
         defer = Deferred()
         def trigger_defer(*args):
             print "trigger defer", args
@@ -76,6 +78,7 @@ class DesktopGhost(ObeliskOfLightClient):
         return defer
 
     def address_update(self, address_version, address_hash, height, block_hash, tx):
+        """address update arrived (from address_subscribe)"""
         msg = {
             'address_version': address_version,
             'address_hash': address_hash.encode('hex'),
@@ -86,6 +89,7 @@ class DesktopGhost(ObeliskOfLightClient):
         self.ws.broadcast('address', msg)
 
     def _on_last_height_fetched(self, ec, height, tx_hashes=[]):
+        """last height arrived"""
         if self._last_height != height:
             self.send_notification("New Block", "height %s: %s transactions" %(height, len(tx_hashes)))
             self.icon.set_tooltip("Last height: " + str(height))
@@ -93,6 +97,7 @@ class DesktopGhost(ObeliskOfLightClient):
         #reactor.callLater(1, self.fetch_last_height, self._on_last_height_fetched)
 
     def send_notification(self, title, message):
+        """send a notification to the desktop"""
         try:
             n = pynotify.Notification(title, message)
             n.set_icon_from_pixbuf(self.icon.get_pixbuf())
@@ -108,6 +113,7 @@ class DesktopGhost(ObeliskOfLightClient):
             return "%d minute" % minutes
 
     def set_state(self,state):
+        """set icon state"""
         old_state=self.state
         self.icon.set_from_file(self.icon_path(state+".png"))
         if state == "idle":
